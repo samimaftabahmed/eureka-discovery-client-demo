@@ -1,23 +1,35 @@
 package com.sam.eurekadiscoveryclientdemo;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.client.ServiceInstance;
-import org.springframework.cloud.client.discovery.DiscoveryClient;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.web.client.RestTemplate;
 
 @RestController
 public class MyController {
 
     @Autowired
-    private DiscoveryClient discoveryClient;
+    private RestTemplate restTemplate;
+    @Value("${spring.application.name}")
+    private String applicationName;
+    @Autowired
+    private ServletWebServerApplicationContext server;
 
-    @RequestMapping("/service-instances/{applicationName}")
-    public List<ServiceInstance> serviceInstancesByApplicationName(@PathVariable String applicationName) {
+    @GetMapping("/service-instances")
+    public String serviceInstancesByApplicationName() {
 
-        return this.discoveryClient.getInstances(applicationName);
+        return applicationName + ":" + server.getWebServer().getPort();
+    }
+
+    @GetMapping("/get-details")
+    public String getOtherInstances() {
+
+        // same project copied but application name changed to mas-client
+        String url = "http://mas-client/service-instances/";
+        ResponseEntity<String> responseEntity = restTemplate.getForEntity(url, String.class);
+        return responseEntity.getBody();
     }
 }
